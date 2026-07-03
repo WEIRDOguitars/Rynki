@@ -1,5 +1,7 @@
 const STORAGE_KEY = "rynki-app-v3";
 const OLD_KEYS = ["rynki-app-v2", "rynki-app-v1"];
+const NBP_TABLE_A_URL = "https://api.nbp.pl/api/exchangerates/tables/a/?format=json";
+const NBP_GOLD_URL = "https://api.nbp.pl/api/cenyzlota?format=json";
 
 const initialData = {
   asOf: "2026-07-03",
@@ -58,6 +60,7 @@ const initialData = {
 let state = loadState();
 
 const pln = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 });
+const plnPrecise = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const pct = new Intl.NumberFormat("pl-PL", { style: "percent", maximumFractionDigits: 1 });
 
 function uid() {
@@ -154,11 +157,84 @@ function render() {
   renderWatchlist();
   renderNews();
   renderOpportunities();
+  renderMarketData(state.marketData);
 }
 
 function setText(selector, value) {
   const el = document.querySelector(selector);
   if (el) el.textContent = value;
+}
+
+function renderMarketData(data) {
+  const fallback = data || {
+    source: "NBP",
+    fetchedAt: null,
+    rates: {
+      USD: { value: state.fx.usdpln, date: state.asOf },
+      EUR: { value: state.fx.eurpln, date: state.asOf },
+      JPY: { value: null, date: state.asOf },
+      GOLD: { value: state.fx.goldPlnGram, date: state.asOf }
+    }
+  };
+  setText("#rateUsd", formatRate(fallback.rates.USD?.value));
+  setText("#rateEur", formatRate(fallback.rates.EUR?.value));
+  setText("#rateJpy", formatRate(fallback.rates.JPY?.value));
+  setText("#rateGold", formatRate(fallback.rates.GOLD?.value));
+  setText("#rateUsdDate", `NBP tabela A: ${fallback.rates.USD?.date || "-"}`);
+  setText("#rateEurDate", `NBP tabela A: ${fallback.rates.EUR?.date || "-"}`);
+  setText("#rateJpyDate", `NBP tabela A: ${fallback.rates.JPY?.date || "-"}`);
+  setText("#rateGoldDate", `NBP cena zlota: ${fallback.rates.GOLD?.date || "-"}`);
+  setText("#marketDataStatus", fallback.fetchedAt ? `Zrodlo: NBP | pobrano ${formatDateTime(fallback.fetchedAt)}` : "Zrodlo: NBP | dane startowe");
+}
+
+function formatRate(value) {
+  return Number.isFinite(Number(value)) ? plnPrecise.format(Number(value)) : "-";
+}
+
+function formatDateTime(isoDate) {
+  return new Intl.DateTimeFormat("pl-PL", {
+    dateStyle: "short",
+    timeStyle: "short"
+  }).format(new Date(isoDate));
+}
+
+async function refreshMarketData() {
+  setText("#marketDataStatus", "pobieram z NBP...");
+  try {
+    const [tableResponse, goldResponse] = await Promise.all([
+      fetch(NBP_TABLE_A_URL, { cache: "no-store" }),
+      fetch(NBP_GOLD_URL, { cache: "no-store" })
+    ]);
+    if (!tableResponse.ok || !goldResponse.ok) {
+      throw new Error("NBP API error");
+    }
+    const tablePayload = await tableResponse.json();
+    const goldPayload = await goldResponse.json();
+    const table = tablePayload[0];
+    const byCode = Object.fromEntries(table.rates.map((rate) => [rate.code, rate.mid]));
+    const gold = goldPayload[0];
+    state.marketData = {
+      source: "Narodowy Bank Polski",
+      fetchedAt: new Date().toISOString(),
+      rates: {
+        USD: { value: byCode.USD, date: table.effectiveDate },
+        EUR: { value: byCode.EUR, date: table.effectiveDate },
+        JPY: { value: byCode.JPY, date: table.effectiveDate },
+        GOLD: { value: gold.cena, date: gold.data }
+      }
+    };
+    state.fx = {
+      ...state.fx,
+      usdpln: byCode.USD,
+      eurpln: byCode.EUR,
+      goldPlnGram: gold.cena
+    };
+    saveState();
+    renderMarketData(state.marketData);
+  } catch (error) {
+    renderMarketData(state.marketData);
+    setText("#marketDataStatus", "Nie udalo sie pobrac NBP; pokazuje ostatnie zapisane dane");
+  }
 }
 
 function renderAllocationChart() {
@@ -628,3 +704,6 @@ document.querySelector("#loadChart").addEventListener("click", async () => {
 });
 
 render();
+refreshMarketData();
+
+document.querySelector("#refreshMarketData").addEventListener("click", refreshMarketData);

@@ -29,6 +29,7 @@ http://127.0.0.1:8765/index.html
 - Panel wskaźników makro z ręcznym uzupełnianiem wartości i scoringu ryzyka.
 - Moduł alokacji ETF USD z propozycją rebalancingu i argumentami za/przeciw.
 - Moduł wykresów świecowych z próbą pobrania danych ze Stooq i importem OHLC CSV.
+- Widoczny panel kursów USD/PLN, EUR/PLN, JPY/PLN oraz ceny złota PLN/g pobierany z oficjalnego API NBP.
 - Zakładka wiadomości z ręcznym feedem i szybkimi linkami do Google News dla tickerów z portfela.
 - Zakładka potencjalnych okazji inwestycyjnych oparta o lokalne reguły i wpisane fundamenty.
 

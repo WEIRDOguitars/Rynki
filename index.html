@@ -46,6 +46,41 @@
         </article>
       </section>
 
+      <section class="market-rates" aria-label="Kursy walut i zloto">
+        <div class="market-rates-title">
+          <div>
+            <p class="eyebrow">Dane rynkowe</p>
+            <h2>Kursy walut i zloto</h2>
+          </div>
+          <div class="market-source">
+            <span id="marketDataStatus">pobieram z NBP...</span>
+            <button id="refreshMarketData" class="secondary">Odswiez</button>
+          </div>
+        </div>
+        <div class="rate-grid">
+          <article class="rate-card">
+            <span>USD/PLN</span>
+            <strong id="rateUsd">-</strong>
+            <small id="rateUsdDate">NBP</small>
+          </article>
+          <article class="rate-card">
+            <span>EUR/PLN</span>
+            <strong id="rateEur">-</strong>
+            <small id="rateEurDate">NBP</small>
+          </article>
+          <article class="rate-card">
+            <span>JPY/PLN</span>
+            <strong id="rateJpy">-</strong>
+            <small id="rateJpyDate">NBP</small>
+          </article>
+          <article class="rate-card">
+            <span>Zloto PLN/g</span>
+            <strong id="rateGold">-</strong>
+            <small id="rateGoldDate">NBP</small>
+          </article>
+        </div>
+      </section>
+
       <section class="layout">
         <aside class="panel nav-panel">
           <button class="tab active" data-tab="dashboard">Dashboard</button>

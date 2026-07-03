@@ -111,6 +111,56 @@ input[type="file"] {
   margin-bottom: 18px;
 }
 
+.market-rates {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+  padding: 16px;
+}
+
+.market-rates-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.market-source {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.rate-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.rate-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fbfcfe;
+}
+
+.rate-card span,
+.rate-card small {
+  color: var(--muted);
+}
+
+.rate-card strong {
+  display: block;
+  margin: 6px 0 2px;
+  font-size: 23px;
+}
+
 .metric,
 .panel {
   background: var(--panel);
@@ -390,6 +440,7 @@ td {
 
 @media (max-width: 960px) {
   .summary-grid,
+  .rate-grid,
   .two-col,
   .layout,
   .form-grid,
@@ -403,6 +454,15 @@ td {
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .market-rates-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .market-source {
+    justify-content: flex-start;
   }
 
   .nav-panel {
