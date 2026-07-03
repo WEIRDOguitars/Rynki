@@ -1,0 +1,145 @@
+base_currency: PLN
+report_language: pl
+default_timezone: Europe/Warsaw
+
+data_policy:
+  require_source: true
+  require_retrieved_at: true
+  require_as_of_date: true
+  show_conflict_warning: true
+  avoid_investment_advice: true
+
+assets:
+  - id: sp500_etf
+    name: S&P 500 ETF
+    class: equity_etf
+    currency: USD
+    primary_symbol: SPY.US
+    fallback_symbols:
+      stooq: spy.us
+    benchmark: sp500
+    drivers: [fed, us_yields, usd_pln, earnings, etf_flows]
+    alert_thresholds:
+      daily_return_pct: 2.0
+      drawdown_pct: 8.0
+
+  - id: core_msci_world
+    name: Core MSCI World
+    class: equity_etf
+    currency: USD
+    primary_symbol: IWDA
+    provider: BlackRock iShares
+    benchmark: msci_world
+    drivers: [global_equities, usd_pln, fed, ecb, etf_flows]
+
+  - id: shy
+    name: iShares 1-3 Year Treasury Bond ETF
+    class: bond_etf
+    currency: USD
+    primary_symbol: SHY.US
+    provider: BlackRock iShares
+    benchmark: us_treasury_short
+    drivers: [fed, us_2y_yield, real_rates, usd_pln]
+
+  - id: gold
+    name: Gold
+    class: commodity
+    currency: PLN
+    primary_symbol: XAU
+    sources: [nbp_gold, market_data_provider]
+    drivers: [real_rates, usd, geopolitical_risk, inflation]
+
+  - id: xle
+    name: Energy Select Sector SPDR Fund
+    class: sector_etf
+    currency: USD
+    primary_symbol: XLE.US
+    provider: State Street
+    drivers: [oil, gas, inflation, us_growth, etf_flows]
+
+  - id: ura
+    name: Global X Uranium ETF
+    class: thematic_etf
+    currency: USD
+    primary_symbol: URA.US
+    provider: Global X
+    drivers: [uranium, nuclear_policy, energy_security, etf_flows]
+
+  - id: ung
+    name: United States Natural Gas Fund
+    class: commodity_etf
+    currency: USD
+    primary_symbol: UNG.US
+    drivers: [natural_gas, weather, eia_storage, energy_policy]
+
+  - id: btc
+    name: Bitcoin
+    class: crypto
+    currency: USD
+    primary_symbol: BTC
+    coingecko_id: bitcoin
+    drivers: [liquidity, usd, etf_flows, crypto_sentiment]
+
+  - id: eth
+    name: Ethereum
+    class: crypto
+    currency: USD
+    primary_symbol: ETH
+    coingecko_id: ethereum
+    drivers: [ethereum_onchain, gas, staking, crypto_sentiment]
+
+  - id: link
+    name: Chainlink
+    class: crypto
+    currency: USD
+    primary_symbol: LINK
+    coingecko_id: chainlink
+    drivers: [chainlink_news, token_flows, crypto_sentiment]
+
+  - id: xrp
+    name: XRP
+    class: crypto
+    currency: USD
+    primary_symbol: XRP
+    coingecko_id: ripple
+    drivers: [regulation, ripple_news, crypto_sentiment]
+
+  - id: sol
+    name: Solana
+    class: crypto
+    currency: USD
+    primary_symbol: SOL
+    coingecko_id: solana
+    drivers: [solana_ecosystem, onchain_activity, crypto_sentiment]
+
+fx:
+  - pair: USDPLN
+    source: nbp
+    drivers: [fed, nbp, us_yields, risk_sentiment]
+  - pair: EURPLN
+    source: nbp
+    drivers: [ecb, nbp, eurozone_macro, risk_sentiment]
+
+macro_watchlist:
+  us:
+    - fed_funds
+    - treasury_2y
+    - treasury_10y
+    - treasury_10y_2y_spread
+    - cpi
+    - pce
+    - unemployment
+  eu:
+    - ecb_policy_rate
+    - hicp
+    - unemployment
+  pl:
+    - usd_pln
+    - eur_pln
+    - gold_pln_gram
+
+report_sections:
+  - what_happened
+  - likely_drivers
+  - risks_to_watch
+  - data_requiring_confirmation

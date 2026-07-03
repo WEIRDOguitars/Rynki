@@ -40,3 +40,11 @@ http://127.0.0.1:8765/index.html
 - Dodać import PDF/CSV bezpośrednio z poziomu aplikacji.
 - Rozdzielić aktywa bazowe od pozycji podsumowujących, żeby uniknąć podwójnego liczenia.
 - Dodać konektor danych fundamentalnych: najlepiej przez eksport z InvestingPro, oficjalne API lub płatnego dostawcę danych. TradingView dobrze nadaje się do wykresów/widgetów, ale nie jest stabilnym źródłem do masowego pobierania fundamentów.
+
+## Specyfikacja v2
+
+Docelowy plan aplikacji, zrodla danych, moduly backendu i zasady jakosci sa opisane w:
+
+- `docs/PRODUCT_SPEC.md`
+- `config/portfolio.yaml`
+- `.env.example`
