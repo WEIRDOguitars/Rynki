@@ -172,7 +172,8 @@ Daily report generator in Polish:
 Dashboard:
 
 - Asset cards
-- Charts
+- Pie/donut charts for portfolio composition
+- Price and analytics charts
 - Alerts table
 - Daily report view
 - Source and timestamp visibility

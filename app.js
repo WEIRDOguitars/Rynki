@@ -2,6 +2,7 @@ const STORAGE_KEY = "rynki-app-v3";
 const OLD_KEYS = ["rynki-app-v2", "rynki-app-v1"];
 const NBP_TABLE_A_URL = "https://api.nbp.pl/api/exchangerates/tables/a/?format=json";
 const NBP_GOLD_URL = "https://api.nbp.pl/api/cenyzlota?format=json";
+const CHART_COLORS = ["#2457a6", "#24785a", "#b97918", "#7c4d9e", "#b24a4a", "#2f6f83", "#5d6675", "#8d6b2d", "#466a9f", "#9a4f78"];
 
 const initialData = {
   asOf: "2026-07-03",
@@ -37,6 +38,22 @@ const initialData = {
     { name: "Core MSCI EM IMI", ticker: "EIMI", target: 15 },
     { name: "Core MSCI World", ticker: "IWDA", target: 30 },
     { name: "Core S&P 500", ticker: "CSPX", target: 30 }
+  ],
+  monitoredAssets: [
+    { id: "sp500_etf", name: "S&P 500 ETF", symbol: "SPY.US", class: "equity_etf", currency: "USD", drivers: ["Fed", "US yields", "USD/PLN", "ETF flows"] },
+    { id: "core_msci_world", name: "Core MSCI World", symbol: "IWDA", class: "equity_etf", currency: "USD", drivers: ["global equities", "USD/PLN", "Fed", "ECB"] },
+    { id: "shy", name: "SHY", symbol: "SHY.US", class: "bond_etf", currency: "USD", drivers: ["Fed", "US 2Y", "real rates"] },
+    { id: "gold", name: "Zloto", symbol: "XAU", class: "commodity", currency: "PLN", drivers: ["real rates", "USD", "inflation"] },
+    { id: "xle", name: "XLE", symbol: "XLE.US", class: "sector_etf", currency: "USD", drivers: ["oil", "gas", "inflation"] },
+    { id: "ura", name: "URA", symbol: "URA.US", class: "thematic_etf", currency: "USD", drivers: ["uranium", "nuclear", "energy security"] },
+    { id: "ung", name: "UNG / gaz ziemny", symbol: "UNG.US", class: "commodity_etf", currency: "USD", drivers: ["natural gas", "weather", "EIA storage"] },
+    { id: "btc", name: "Bitcoin", symbol: "BTC", class: "crypto", currency: "USD", drivers: ["liquidity", "ETF flows", "crypto sentiment"] },
+    { id: "eth", name: "Ethereum", symbol: "ETH", class: "crypto", currency: "USD", drivers: ["on-chain", "gas", "staking"] },
+    { id: "link", name: "Chainlink", symbol: "LINK", class: "crypto", currency: "USD", drivers: ["oracle adoption", "token flows"] },
+    { id: "xrp", name: "XRP", symbol: "XRP", class: "crypto", currency: "USD", drivers: ["regulation", "Ripple news"] },
+    { id: "sol", name: "Solana", symbol: "SOL", class: "crypto", currency: "USD", drivers: ["ecosystem", "on-chain activity"] },
+    { id: "usdpln", name: "USD/PLN", symbol: "USDPLN", class: "fx", currency: "PLN", drivers: ["Fed", "NBP", "risk sentiment"] },
+    { id: "eurpln", name: "EUR/PLN", symbol: "EURPLN", class: "fx", currency: "PLN", drivers: ["ECB", "NBP", "eurozone macro"] }
   ],
   indicators: [
     { id: "yieldCurve", name: "Krzywa rentownosci", value: "-0.4 pp", score: 65, note: "Odwracanie lub splaszczanie podnosi ryzyko poznego cyklu." },
@@ -83,6 +100,7 @@ function normalizeState(raw) {
   next.xtbPositions = Array.isArray(raw.xtbPositions) ? raw.xtbPositions : structuredClone(initialData.xtbPositions);
   next.news = Array.isArray(raw.news) ? raw.news : structuredClone(initialData.news);
   next.etfTargets = Array.isArray(raw.etfTargets) ? raw.etfTargets.map((item) => ({ ...item, target: Number(item.target || 0) })) : initialData.etfTargets;
+  next.monitoredAssets = Array.isArray(raw.monitoredAssets) ? raw.monitoredAssets : structuredClone(initialData.monitoredAssets);
   return next;
 }
 
@@ -152,6 +170,7 @@ function render() {
   renderDecisionNotes(risk, total);
   renderAssets();
   renderXtb();
+  renderMonitoringScope();
   renderEtf();
   renderIndicators();
   renderWatchlist();
@@ -241,27 +260,54 @@ function renderAllocationChart() {
   const canvas = document.querySelector("#allocationChart");
   const ctx = canvas.getContext("2d");
   const data = Object.entries(byCategory()).sort((a, b) => b[1] - a[1]);
-  const colors = ["#2457a6", "#24785a", "#b97918", "#7c4d9e", "#b24a4a", "#2f6f83", "#5d6675"];
-  drawBars(ctx, canvas, data, colors, pln.format);
+  drawPieChart(ctx, canvas, data, CHART_COLORS, { donut: true, centerLabel: "Majatek" });
+  renderLegend("#allocationLegend", data, CHART_COLORS, sum(allPositions()));
 }
 
-function drawBars(ctx, canvas, data, colors, formatter) {
+function drawPieChart(ctx, canvas, data, colors, options = {}) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const max = Math.max(...data.map(([, value]) => value), 1);
-  const left = 170;
-  const top = 24;
-  const row = 42;
-  ctx.font = "15px Segoe UI";
-  data.forEach(([label, value], index) => {
-    const y = top + index * row;
-    const width = Math.max(4, (value / max) * (canvas.width - left - 120));
-    ctx.fillStyle = "#18202a";
-    ctx.fillText(label, 14, y + 18);
+  const total = data.reduce((acc, [, value]) => acc + Number(value || 0), 0);
+  if (!total) return;
+  const radius = Math.min(canvas.width, canvas.height) * 0.36;
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  let start = -Math.PI / 2;
+  data.forEach(([, value], index) => {
+    const angle = (Number(value) / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, start, start + angle);
+    ctx.closePath();
     ctx.fillStyle = colors[index % colors.length];
-    ctx.fillRect(left, y, width, 24);
-    ctx.fillStyle = "#18202a";
-    ctx.fillText(formatter(value), left + width + 10, y + 18);
+    ctx.fill();
+    start += angle;
   });
+  if (options.donut) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 0.56, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+    ctx.fillStyle = "#18202a";
+    ctx.font = "700 18px Segoe UI";
+    ctx.textAlign = "center";
+    ctx.fillText(options.centerLabel || "Portfel", cx, cy - 4);
+    ctx.font = "13px Segoe UI";
+    ctx.fillStyle = "#667085";
+    ctx.fillText(pln.format(total), cx, cy + 18);
+    ctx.textAlign = "left";
+  }
+}
+
+function renderLegend(selector, data, colors, total) {
+  const target = document.querySelector(selector);
+  if (!target) return;
+  target.innerHTML = data
+    .map(([label, value], index) => `<div class="legend-item">
+      <span class="legend-dot" style="background:${colors[index % colors.length]}"></span>
+      <strong>${label}</strong>
+      <small>${pct.format(value / (total || 1))} | ${pln.format(value)}</small>
+    </div>`)
+    .join("");
 }
 
 function renderTopAssets(total) {
@@ -319,6 +365,12 @@ function renderXtb() {
       <small>Akcje: ${pln.format(data.stocks)} | ETF: ${pln.format(data.etfs)} | Gotowka: ${pln.format(data.cash)}</small>
     </article>`)
     .join("");
+  const accountData = Object.entries(accounts).map(([account, data]) => [account.replace("XTB ", ""), data.total]);
+  const accountCanvas = document.querySelector("#xtbAccountChart");
+  if (accountCanvas) {
+    drawPieChart(accountCanvas.getContext("2d"), accountCanvas, accountData, CHART_COLORS, { donut: true, centerLabel: "XTB" });
+    renderLegend("#xtbAccountLegend", accountData, CHART_COLORS, xtbTotal());
+  }
 
   const rows = document.querySelector("#xtbRows");
   rows.innerHTML = "";
@@ -331,6 +383,24 @@ function renderXtb() {
       rows.appendChild(tr);
     });
   setText("#xtbPositionsMeta", `${state.xtbPositions.length} pozycji | ${pln.format(xtbTotal())}`);
+}
+
+function renderMonitoringScope() {
+  const target = document.querySelector("#monitoringScope");
+  if (!target) return;
+  target.innerHTML = state.monitoredAssets
+    .map((asset) => {
+      const held = allPositions().some((item) => item.ticker === asset.symbol || item.name.toLowerCase().includes(asset.name.toLowerCase()));
+      return `<article class="monitoring-card">
+        <header>
+          <strong>${asset.name}</strong>
+          <span class="pill ${held ? "good" : "warn"}">${held ? "w portfelu" : "watch"}</span>
+        </header>
+        <small>${asset.symbol} | ${asset.class} | ${asset.currency}</small>
+        <p>${asset.drivers.join(", ")}</p>
+      </article>`;
+    })
+    .join("");
 }
 
 function fmt(value) {
@@ -412,7 +482,9 @@ function renderIndicators() {
 
 function renderWatchlist() {
   const select = document.querySelector("#symbolSelect");
-  const symbols = Array.from(new Map(allPositions().filter((item) => item.ticker).map((item) => [item.ticker, item.name])).entries());
+  const current = allPositions().filter((item) => item.ticker).map((item) => [item.ticker, item.name]);
+  const monitored = state.monitoredAssets.map((item) => [item.symbol, item.name]);
+  const symbols = Array.from(new Map([...current, ...monitored]).entries());
   select.innerHTML = symbols.map(([symbol, name]) => `<option value="${symbol}">${symbol} - ${name}</option>`).join("");
   drawCandles(makeDemoCandles());
 }
@@ -489,7 +561,9 @@ function parseOhlcCsv(text) {
 }
 
 function renderNews() {
-  const tickers = allPositions().filter((item) => item.ticker && !item.ticker.startsWith("MANUAL")).slice(0, 10);
+  const positionTickers = allPositions().filter((item) => item.ticker && !item.ticker.startsWith("MANUAL")).map((item) => ({ ticker: item.ticker, name: item.name }));
+  const monitoredTickers = state.monitoredAssets.map((item) => ({ ticker: item.symbol, name: item.name }));
+  const tickers = Array.from(new Map([...positionTickers, ...monitoredTickers].map((item) => [item.ticker, item])).values()).slice(0, 18);
   document.querySelector("#newsLinks").innerHTML = tickers
     .map((item) => `<a target="_blank" href="https://news.google.com/search?q=${encodeURIComponent(item.ticker + ' ' + item.name)}">${item.ticker}</a>`)
     .join("");

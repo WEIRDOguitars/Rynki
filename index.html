@@ -102,6 +102,7 @@
                   <span id="assetCount">-</span>
                 </div>
                 <canvas id="allocationChart" width="720" height="360"></canvas>
+                <div id="allocationLegend" class="chart-legend"></div>
               </section>
               <section class="panel">
                 <div class="panel-title">
@@ -117,6 +118,13 @@
                 <span>reguly lokalne</span>
               </div>
               <div id="decisionNotes" class="notes-grid"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Monitoring v2</h2>
+                <span>dane twarde + interpretacja osobno</span>
+              </div>
+              <div id="monitoringScope" class="monitoring-grid"></div>
             </section>
           </div>
 
@@ -172,7 +180,13 @@
                 <h2>XTB wedlug kont</h2>
                 <span>IKE / IKZE / Portfel $</span>
               </div>
-              <div id="xtbAccountCards" class="account-grid"></div>
+              <div class="xtb-overview">
+                <div id="xtbAccountCards" class="account-grid"></div>
+                <div class="pie-side">
+                  <canvas id="xtbAccountChart" width="360" height="300"></canvas>
+                  <div id="xtbAccountLegend" class="chart-legend compact"></div>
+                </div>
+              </div>
             </section>
             <section class="panel">
               <div class="panel-title">

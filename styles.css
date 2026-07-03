@@ -251,13 +251,23 @@ canvas {
   max-height: 390px;
 }
 
+#allocationChart {
+  max-height: 320px;
+}
+
+#xtbAccountChart {
+  max-height: 260px;
+}
+
 .asset-list,
 .recommendations,
 .indicator-grid,
 .notes-grid,
 .account-grid,
+.monitoring-grid,
 .news-list,
-.quick-links {
+.quick-links,
+.chart-legend {
   display: grid;
   gap: 10px;
 }
@@ -267,6 +277,7 @@ canvas {
 .indicator,
 .recommendation,
 .account-card,
+.monitoring-card,
 .news-item {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -340,9 +351,14 @@ td {
   grid-template-columns: repeat(2, minmax(230px, 1fr));
 }
 
+.monitoring-grid {
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+}
+
 .indicator header,
 .recommendation header,
 .account-card header,
+.monitoring-card header,
 .news-item header {
   display: flex;
   align-items: center;
@@ -352,6 +368,49 @@ td {
 
 .account-grid {
   grid-template-columns: repeat(3, minmax(220px, 1fr));
+}
+
+.xtb-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.8fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.pie-side {
+  display: grid;
+  gap: 10px;
+}
+
+.chart-legend {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.chart-legend.compact {
+  grid-template-columns: 1fr;
+}
+
+.legend-item {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-item small,
+.monitoring-card small,
+.monitoring-card p {
+  color: var(--muted);
+}
+
+.monitoring-card p {
+  margin: 8px 0 0;
 }
 
 .account-total {
@@ -447,7 +506,10 @@ td {
   .form-grid-wide,
   .notes-grid,
   .indicator-grid,
-  .account-grid {
+  .account-grid,
+  .monitoring-grid,
+  .xtb-overview,
+  .chart-legend {
     grid-template-columns: 1fr;
   }
 
