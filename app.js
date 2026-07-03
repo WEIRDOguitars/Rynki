@@ -388,15 +388,28 @@ function renderXtb() {
 function renderMonitoringScope() {
   const target = document.querySelector("#monitoringScope");
   if (!target) return;
+  const externalAssets = Object.fromEntries((state.externalData?.assets || []).map((item) => [item.id, item]));
   target.innerHTML = state.monitoredAssets
     .map((asset) => {
       const held = allPositions().some((item) => item.ticker === asset.symbol || item.name.toLowerCase().includes(asset.name.toLowerCase()));
+      const external = externalAssets[asset.id];
+      const analytics = external?.analytics || {};
+      const quote = external?.quote || {};
+      const price = analytics.latest_close || quote.price_usd;
+      const change = analytics.daily_return ?? (quote.change_24h_pct != null ? quote.change_24h_pct / 100 : null);
+      const source = external?.sources?.join(", ") || "czeka na dane";
+      const sourceTime = external?.sources?.length && external?.retrieved_at ? ` | ${formatDateTime(external.retrieved_at)}` : "";
       return `<article class="monitoring-card">
         <header>
           <strong>${asset.name}</strong>
           <span class="pill ${held ? "good" : "warn"}">${held ? "w portfelu" : "watch"}</span>
         </header>
         <small>${asset.symbol} | ${asset.class} | ${asset.currency}</small>
+        <div class="monitoring-metrics">
+          <strong>${price ? Number(price).toFixed(2) : "-"}</strong>
+          <span class="${change >= 0 ? "good-text" : "bad-text"}">${change == null ? "-" : pct.format(change)}</span>
+        </div>
+        <small>Zrodlo: ${source}${sourceTime}</small>
         <p>${asset.drivers.join(", ")}</p>
       </article>`;
     })
@@ -567,15 +580,49 @@ function renderNews() {
   document.querySelector("#newsLinks").innerHTML = tickers
     .map((item) => `<a target="_blank" href="https://news.google.com/search?q=${encodeURIComponent(item.ticker + ' ' + item.name)}">${item.ticker}</a>`)
     .join("");
-  document.querySelector("#newsList").innerHTML = state.news
-    .slice()
-    .reverse()
+  const externalNews = (state.externalData?.news_events || []).filter((item) => item.title);
+  const localNews = state.news.slice().reverse();
+  document.querySelector("#newsList").innerHTML = [
+    ...externalNews.map((item) => ({
+      title: item.title,
+      source: item.source || "GDELT",
+      tags: item.query || "market",
+      impact: "neutral",
+      url: item.url,
+      date: item.published_at || item.retrieved_at
+    })),
+    ...localNews
+  ]
     .map((item) => `<article class="news-item ${item.impact}">
       <header><strong>${item.title}</strong><span>${item.impact}</span></header>
       <small>${item.date || ""} | ${item.source || "Manual"} | ${item.tags || ""}</small>
       ${item.url ? `<a target="_blank" href="${item.url}">Otworz zrodlo</a>` : ""}
     </article>`)
     .join("");
+}
+
+async function loadGeneratedData() {
+  try {
+    const response = await fetch("data/latest.json", { cache: "no-store" });
+    if (!response.ok) return;
+    const payload = await response.json();
+    state.externalData = payload;
+    if (payload.fx?.rates) {
+      state.marketData = {
+        source: payload.fx.source || "NBP",
+        fetchedAt: payload.fx.retrieved_at || payload.generated_at,
+        rates: {
+          USD: { value: payload.fx.rates.USD?.value, date: payload.fx.rates.USD?.as_of_date },
+          EUR: { value: payload.fx.rates.EUR?.value, date: payload.fx.rates.EUR?.as_of_date },
+          JPY: { value: payload.fx.rates.JPY?.value, date: payload.fx.rates.JPY?.as_of_date },
+          GOLD: { value: payload.fx.rates.GOLD?.value, date: payload.fx.rates.GOLD?.as_of_date }
+        }
+      };
+    }
+    render();
+  } catch (error) {
+    // The static GitHub Pages version may not have generated data yet.
+  }
 }
 
 function renderOpportunities() {
@@ -778,6 +825,7 @@ document.querySelector("#loadChart").addEventListener("click", async () => {
 });
 
 render();
+loadGeneratedData();
 refreshMarketData();
 
 document.querySelector("#refreshMarketData").addEventListener("click", refreshMarketData);

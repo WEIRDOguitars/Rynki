@@ -413,6 +413,25 @@ td {
   margin: 8px 0 0;
 }
 
+.monitoring-metrics {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 10px 0 4px;
+}
+
+.monitoring-metrics strong {
+  font-size: 20px;
+}
+
+.good-text {
+  color: var(--green);
+}
+
+.bad-text {
+  color: var(--red);
+}
+
 .account-total {
   margin: 8px 0 4px;
   font-size: 24px;

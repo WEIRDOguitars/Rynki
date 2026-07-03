@@ -17,6 +17,38 @@ Potem wejść na:
 http://127.0.0.1:8765/index.html
 ```
 
+## Tryb lokalny z aktualizacja danych
+
+W docelowym trybie lokalnym sklad portfela edytujesz recznie w aplikacji, a dane rynkowe/newsowe pobiera skrypt:
+
+```powershell
+cd C:\Users\48501\Documents\Rynki
+.\scripts\start_local.ps1
+```
+
+Skrypt najpierw uruchamia `scripts/update_data.py`, zapisuje `data/latest.json` oraz `data/rynki.sqlite`, a potem startuje lokalny serwer.
+
+Bez kluczy API dzialaja obecnie zrodla publiczne:
+
+- NBP: USD/PLN, EUR/PLN, JPY/PLN, zloto PLN/g.
+- CoinGecko: krypto z `coingecko_id`.
+- GDELT: newsy i wydarzenia.
+
+Dla pelnych danych akcji/ETF dodaj klucz `ALPHA_VANTAGE_API_KEY` w lokalnym pliku `.env`. Stooq zostaje fallbackiem, ale moze byc blokowany przez weryfikacje przegladarki.
+
+Zeby dane aktualizowaly sie automatycznie raz dziennie w Windows:
+
+```powershell
+cd C:\Users\48501\Documents\Rynki
+.\scripts\install_daily_update_task.ps1
+```
+
+Domyslnie zadanie uruchamia sie o `07:30`. Godzine mozna zmienic:
+
+```powershell
+.\scripts\install_daily_update_task.ps1 -RunAt "18:00"
+```
+
 ## Co jest w pierwszej wersji
 
 - Import początkowych danych z PDF `Fins - II kw 2026`.
