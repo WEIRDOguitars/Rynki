@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rynki | Portfel i Kokpit Makro</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Rynki</p>
+        <h1>Portfel i kokpit decyzyjny</h1>
+      </div>
+      <div class="topbar-actions">
+        <button id="exportData" class="icon-button" title="Eksportuj dane">DL</button>
+        <label class="icon-button file-button" title="Importuj JSON">
+          UP
+          <input id="importData" type="file" accept="application/json" />
+        </label>
+        <button id="resetData" class="secondary">Przywroc dane Q2</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary-grid" aria-label="Podsumowanie">
+        <article class="metric">
+          <span>Majatek netto</span>
+          <strong id="totalValue">-</strong>
+          <small id="totalMeta">Dane lokalne</small>
+        </article>
+        <article class="metric">
+          <span>XTB razem</span>
+          <strong id="xtbValue">-</strong>
+          <small id="xtbShare">-</small>
+        </article>
+        <article class="metric">
+          <span>Ryzyko rynku</span>
+          <strong id="riskScore">-</strong>
+          <small id="riskLabel">-</small>
+        </article>
+        <article class="metric">
+          <span>Odchylenie ETF</span>
+          <strong id="rebalanceNeed">-</strong>
+          <small>vs model kwartalny</small>
+        </article>
+      </section>
+
+      <section class="layout">
+        <aside class="panel nav-panel">
+          <button class="tab active" data-tab="dashboard">Dashboard</button>
+          <button class="tab" data-tab="assets">Aktywa</button>
+          <button class="tab" data-tab="xtb">XTB</button>
+          <button class="tab" data-tab="etf">Alokacja ETF</button>
+          <button class="tab" data-tab="market">Makro</button>
+          <button class="tab" data-tab="charts">Wykresy</button>
+          <button class="tab" data-tab="news">Wiadomosci</button>
+          <button class="tab" data-tab="opportunities">Okazje</button>
+        </aside>
+
+        <section class="workspace">
+          <div id="dashboard" class="view active">
+            <div class="two-col">
+              <section class="panel">
+                <div class="panel-title">
+                  <h2>Struktura majatku</h2>
+                  <span id="assetCount">-</span>
+                </div>
+                <canvas id="allocationChart" width="720" height="360"></canvas>
+              </section>
+              <section class="panel">
+                <div class="panel-title">
+                  <h2>Najwieksze pozycje</h2>
+                  <span>PLN</span>
+                </div>
+                <div id="topAssets" class="asset-list"></div>
+              </section>
+            </div>
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Wnioski robocze</h2>
+                <span>reguly lokalne</span>
+              </div>
+              <div id="decisionNotes" class="notes-grid"></div>
+            </section>
+          </div>
+
+          <div id="assets" class="view">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Dodaj aktywo ogolne</h2>
+                <span>gotowka, obligacje, zloto, krypto, fundusze</span>
+              </div>
+              <form id="assetForm" class="form-grid">
+                <input name="name" placeholder="Nazwa" required />
+                <select name="category">
+                  <option>ETF</option>
+                  <option>Akcje</option>
+                  <option>Obligacje</option>
+                  <option>Gotowka i waluty</option>
+                  <option>Krypto</option>
+                  <option>Zloto</option>
+                  <option>Fundusz</option>
+                </select>
+                <input name="valuePln" type="number" min="0" step="0.01" placeholder="Wartosc PLN" required />
+                <input name="currency" placeholder="Waluta" value="PLN" />
+                <input name="ticker" placeholder="Ticker" />
+                <input name="account" placeholder="Konto" />
+                <button type="submit">Zapisz</button>
+              </form>
+            </section>
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Pozycje ogolne</h2>
+                <span id="assetsTotal">-</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nazwa</th>
+                      <th>Kategoria</th>
+                      <th>Konto</th>
+                      <th class="num">Wartosc</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="assetRows"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <div id="xtb" class="view">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>XTB wedlug kont</h2>
+                <span>IKE / IKZE / Portfel $</span>
+              </div>
+              <div id="xtbAccountCards" class="account-grid"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Dodaj akcje lub ETF z XTB</h2>
+                <span>dane z palca, potem po API</span>
+              </div>
+              <form id="xtbForm" class="form-grid form-grid-wide">
+                <input name="name" placeholder="Nazwa, np. Microsoft" required />
+                <input name="ticker" placeholder="Ticker, np. MSFT.US" required />
+                <select name="account">
+                  <option>XTB IKE</option>
+                  <option>XTB IKZE</option>
+                  <option>XTB Portfel USD</option>
+                </select>
+                <select name="category">
+                  <option>Akcje</option>
+                  <option>ETF</option>
+                </select>
+                <input name="quantity" type="number" min="0" step="0.0001" placeholder="Ilosc" />
+                <input name="price" type="number" min="0" step="0.01" placeholder="Cena teraz" />
+                <input name="avgPrice" type="number" min="0" step="0.01" placeholder="Cena zakupu" />
+                <input name="currency" placeholder="Waluta" value="USD" />
+                <input name="valuePln" type="number" min="0" step="0.01" placeholder="Wartosc PLN" required />
+                <input name="pe" type="number" min="0" step="0.01" placeholder="P/E" />
+                <input name="evEbitda" type="number" min="0" step="0.01" placeholder="EV/EBITDA" />
+                <input name="debtEbitda" type="number" min="0" step="0.01" placeholder="Debt/EBITDA" />
+                <input name="margin" type="number" step="0.1" placeholder="Marza EBITDA %" />
+                <input name="revenueGrowth" type="number" step="0.1" placeholder="Wzrost przychodow %" />
+                <input name="sector" placeholder="Sektor" />
+                <button type="submit">Dodaj pozycje</button>
+              </form>
+            </section>
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Pozycje XTB</h2>
+                <span id="xtbPositionsMeta">-</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Konto</th>
+                      <th>Nazwa</th>
+                      <th>Typ</th>
+                      <th>Ticker</th>
+                      <th class="num">Wartosc</th>
+                      <th class="num">P/E</th>
+                      <th class="num">EV/EBITDA</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="xtbRows"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <div id="etf" class="view">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Model kwartalny ETF USD</h2>
+                <span>propozycja i odchylenia</span>
+              </div>
+              <div id="etfRecommendations" class="recommendations"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Za i przeciw zmianom</h2>
+                <span id="regimeName">-</span>
+              </div>
+              <div id="prosCons" class="notes-grid"></div>
+            </section>
+          </div>
+
+          <div id="market" class="view">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Panel wskaznikow</h2>
+                <span>recznie lub po API</span>
+              </div>
+              <div id="indicatorGrid" class="indicator-grid"></div>
+            </section>
+          </div>
+
+          <div id="charts" class="view">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Wykres swiecowy</h2>
+                <span id="chartStatus">tryb lokalny</span>
+              </div>
+              <div class="chart-controls">
+                <select id="symbolSelect"></select>
+                <button id="loadChart">Pobierz swiece</button>
+                <label class="file-upload">
+                  Import OHLC CSV
+                  <input id="csvImport" type="file" accept=".csv,text/csv" />
+                </label>
+              </div>
+              <canvas id="marketChart" width="980" height="430"></canvas>
+              <p class="hint">CSV: date,open,high,low,close. Pobieranie online probuje uzyc publicznego Stooq CSV; dla czesci tickerow moze byc potrzebna korekta symbolu.</p>
+            </section>
+          </div>
+
+          <div id="news" class="view">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Wiadomosci istotne dla portfela</h2>
+                <span>watchlista + reczny feed</span>
+              </div>
+              <form id="newsForm" class="form-grid">
+                <input name="title" placeholder="Naglowek" required />
+                <input name="source" placeholder="Zrodlo" />
+                <input name="tags" placeholder="Tagi, np. BTC, EM, MSFT" />
+                <select name="impact">
+                  <option>neutral</option>
+                  <option>positive</option>
+                  <option>negative</option>
+                </select>
+                <input name="url" placeholder="Link" />
+                <button type="submit">Dodaj news</button>
+              </form>
+              <div id="newsLinks" class="quick-links"></div>
+              <div id="newsList" class="news-list"></div>
+            </section>
+          </div>
+
+          <div id="opportunities" class="view">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Potencjalne okazje</h2>
+                <span id="opportunityMeta">model heurystyczny</span>
+              </div>
+              <div id="opportunityList" class="recommendations"></div>
+            </section>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
